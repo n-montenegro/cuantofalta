@@ -14,11 +14,11 @@ En las barberías de barrio que no trabajan con citas, el cliente solo sabe cuá
 
 ## Integrantes del equipo
 
-| Nombre | Rol | Usuario de GitHub |
+| Nombre | 
 | --- | --- | --- |
-| Nicolas [Apellido] | [Rol] | [@usuario] |
-| [Nombre integrante 2] | [Rol] | [@usuario] |
-| [Nombre integrante 3] | [Rol] | [@usuario] |
+| Nicolas Montenegro | 
+| Jhorman Pardo| 
+| Brayan escobar | 
 
 ## Tecnologías seleccionadas
 
