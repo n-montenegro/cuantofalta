@@ -14,8 +14,7 @@ En las barberías de barrio que no trabajan con citas, el cliente solo sabe cuá
 
 ## Integrantes del equipo
 
-| Nombre | 
-| --- | --- | --- |
+
 | Nicolas Montenegro | 
 | Jhorman Pardo| 
 | Brayan escobar | 
