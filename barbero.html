@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CuántoFalta - Panel del barbero</title>
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+  <div class="tarjeta">
+    <h1>Panel del barbero</h1>
+    <label for="barbero">¿Quién eres?</label>
+    <select id="barbero"></select>
+
+    <p><b>En la silla:</b></p>
+    <div class="silla" id="silla">Nadie</div>
+
+    <button id="siguiente">Siguiente</button>
+
+    <p><b>En espera:</b></p>
+    <ul id="espera"></ul>
+  </div>
+
+  <script>
+    let servicios = [];
+
+    async function cargarDatos() {
+      const datos = await (await fetch("/api/datos")).json();
+      servicios = datos.servicios;
+      document.getElementById("barbero").innerHTML = datos.barberos
+        .map(b => `<option value="${b.id}">${b.nombre}</option>`).join("");
+      mostrarFila();
+    }
+
+    function nombreServicio(id) {
+      return servicios.find(s => s.id === id).nombre;
+    }
+
+    // Muestra quién está en la silla y quiénes esperan
+    async function mostrarFila() {
+      const id = document.getElementById("barbero").value;
+      const fila = await (await fetch(`/api/barberos/${id}/fila`)).json();
+      document.getElementById("silla").textContent = fila.enSilla
+        ? `${fila.enSilla.nombre} - ${nombreServicio(fila.enSilla.servicioId)}`
+        : "Nadie";
+      document.getElementById("espera").innerHTML = fila.enEspera.length
+        ? fila.enEspera.map(t => `<li>Turno ${t.numero}: ${t.nombre} (${nombreServicio(t.servicioId)})</li>`).join("")
+        : "<li>No hay nadie esperando</li>";
+    }
+
+    async function siguiente() {
+      const id = document.getElementById("barbero").value;
+      await fetch(`/api/barberos/${id}/siguiente`, { method: "POST" });
+      mostrarFila();
+    }
+
+    document.getElementById("siguiente").addEventListener("click", siguiente);
+    document.getElementById("barbero").addEventListener("change", mostrarFila);
+    setInterval(mostrarFila, 10000);
+    cargarDatos();
+  </script>
+</body>
+</html>

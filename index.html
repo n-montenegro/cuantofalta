@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CuántoFalta - Tomar turno</title>
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+  <div class="tarjeta">
+    <h1>CuántoFalta</h1>
+    <p class="sub">Toma tu turno y mira cuánto te falta</p>
+
+    <!-- Formulario para pedir turno -->
+    <div id="formulario">
+      <label for="nombre">Tu nombre</label>
+      <input id="nombre" placeholder="Ej: Andrés">
+      <label for="servicio">Servicio</label>
+      <select id="servicio"></select>
+      <label for="barbero">Barbero</label>
+      <select id="barbero"></select>
+      <button id="tomar">Tomar turno</button>
+      <p id="error" class="error"></p>
+    </div>
+
+    <!-- Información del turno (se muestra después de tomarlo) -->
+    <div id="miTurno" class="oculto">
+      <p>Tu turno es el <b id="numero"></b></p>
+      <p id="posicion"></p>
+      <p class="grande" id="minutos"></p>
+      <p class="sub">Se actualiza solo cada 15 segundos.</p>
+    </div>
+  </div>
+
+  <script>
+    let numeroTurno = null;
+
+    // 1. Llenar las listas de servicios y barberos
+    async function cargarDatos() {
+      const respuesta = await fetch("/api/datos");
+      const datos = await respuesta.json();
+      document.getElementById("servicio").innerHTML = datos.servicios
+        .map(s => `<option value="${s.id}">${s.nombre} (${s.minutos} min)</option>`).join("");
+      document.getElementById("barbero").innerHTML = datos.barberos
+        .map(b => `<option value="${b.id}">${b.nombre}</option>`).join("");
+    }
+
+    // 2. Pedir el turno al servidor
+    async function tomarTurno() {
+      const cuerpo = {
+        nombre: document.getElementById("nombre").value,
+        servicioId: document.getElementById("servicio").value,
+        barberoId: document.getElementById("barbero").value,
+      };
+      const respuesta = await fetch("/api/turnos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(cuerpo),
+      });
+      const datos = await respuesta.json();
+      if (!respuesta.ok) {
+        document.getElementById("error").textContent = datos.error;
+        return;
+      }
+      numeroTurno = datos.numero;
+      document.getElementById("formulario").classList.add("oculto");
+      document.getElementById("miTurno").classList.remove("oculto");
+      actualizarTurno();
+      setInterval(actualizarTurno, 15000);
+    }
+
+    // 3. Consultar cuánto falta
+    async function actualizarTurno() {
+      const respuesta = await fetch("/api/turnos/" + numeroTurno);
+      const datos = await respuesta.json();
+      document.getElementById("numero").textContent = datos.numero;
+      if (datos.estado === "EN_SILLA") {
+        document.getElementById("posicion").textContent = "¡Es tu turno! Pasa a la silla.";
+        document.getElementById("minutos").textContent = "";
+      } else if (datos.estado === "ATENDIDO") {
+        document.getElementById("posicion").textContent = "Ya fuiste atendido. ¡Gracias!";
+        document.getElementById("minutos").textContent = "";
+      } else {
+        document.getElementById("posicion").textContent = "Vas en el puesto " + datos.posicion;
+        document.getElementById("minutos").textContent =
+          datos.minutos < 5 ? "Ya casi" : "aprox. " + datos.minutos + " min";
+      }
+    }
+
+    document.getElementById("tomar").addEventListener("click", tomarTurno);
+    cargarDatos();
+  </script>
+</body>
+</html>
