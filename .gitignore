@@ -1,0 +1,10 @@
+# Dependencias que se descargan con "npm install" (no se suben al repositorio)
+node_modules/
+
+# Archivos del sistema y de registro
+.DS_Store
+Thumbs.db
+npm-debug.log*
+
+# Variables de entorno (si algún día se usan)
+.env
