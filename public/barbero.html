@@ -15,46 +15,81 @@
     <p><b>En la silla:</b></p>
     <div class="silla" id="silla">Nadie</div>
 
+    <!-- Cada botón ejecuta un comando (patrón Command) -->
     <button id="siguiente">Siguiente</button>
+    <div class="botones">
+      <button id="noEsta" class="secundario">No está</button>
+      <button id="deshacer" class="secundario">Deshacer</button>
+    </div>
+    <p id="error" class="error"></p>
 
     <p><b>En espera:</b></p>
     <ul id="espera"></ul>
+
+    <p><b>Agregar cliente sin celular:</b></p>
+    <input id="nombreManual" placeholder="Nombre del cliente">
+    <select id="servicioManual"></select>
+    <button id="agregar" class="secundario">Agregar cliente</button>
   </div>
 
   <script>
     let servicios = [];
+    const id = () => document.getElementById("barbero").value;
 
     async function cargarDatos() {
       const datos = await (await fetch("/api/datos")).json();
       servicios = datos.servicios;
       document.getElementById("barbero").innerHTML = datos.barberos
         .map(b => `<option value="${b.id}">${b.nombre}</option>`).join("");
+      document.getElementById("servicioManual").innerHTML = servicios
+        .map(s => `<option value="${s.id}">${s.nombre}</option>`).join("");
       mostrarFila();
     }
 
-    function nombreServicio(id) {
-      return servicios.find(s => s.id === id).nombre;
+    function nombreServicio(servicioId) {
+      return servicios.find(s => s.id === servicioId).nombre;
     }
 
-    // Muestra quién está en la silla y quiénes esperan
-    async function mostrarFila() {
-      const id = document.getElementById("barbero").value;
-      const fila = await (await fetch(`/api/barberos/${id}/fila`)).json();
-      document.getElementById("silla").textContent = fila.enSilla
-        ? `${fila.enSilla.nombre} - ${nombreServicio(fila.enSilla.servicioId)}`
-        : "Nadie";
+    function textoTurno(t) {
+      const marca = t.origen === "MANUAL" ? " · sin celular" : "";
+      return `Turno ${t.numero}: ${t.nombre} (${nombreServicio(t.servicioId)})${marca}`;
+    }
+
+    function pintar(fila) {
+      document.getElementById("silla").textContent = fila.enSilla ? textoTurno(fila.enSilla) : "Nadie";
       document.getElementById("espera").innerHTML = fila.enEspera.length
-        ? fila.enEspera.map(t => `<li>Turno ${t.numero}: ${t.nombre} (${nombreServicio(t.servicioId)})</li>`).join("")
+        ? fila.enEspera.map(t => `<li>${textoTurno(t)}</li>`).join("")
         : "<li>No hay nadie esperando</li>";
+      document.getElementById("deshacer").disabled = !fila.puedeDeshacer;
     }
 
-    async function siguiente() {
-      const id = document.getElementById("barbero").value;
-      await fetch(`/api/barberos/${id}/siguiente`, { method: "POST" });
-      mostrarFila();
+    async function mostrarFila() {
+      pintar(await (await fetch(`/api/barberos/${id()}/fila`)).json());
     }
 
-    document.getElementById("siguiente").addEventListener("click", siguiente);
+    // Envía una acción al servidor y muestra el error si lo hay
+    async function accion(ruta, cuerpo) {
+      const respuesta = await fetch(`/api/barberos/${id()}/${ruta}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(cuerpo || {}),
+      });
+      const datos = await respuesta.json();
+      document.getElementById("error").textContent = respuesta.ok ? "" : datos.error;
+      if (respuesta.ok) pintar(datos);
+      return respuesta.ok;
+    }
+
+    document.getElementById("siguiente").addEventListener("click", () => accion("siguiente"));
+    document.getElementById("noEsta").addEventListener("click", () => accion("no-esta"));
+    document.getElementById("deshacer").addEventListener("click", () => accion("deshacer"));
+    document.getElementById("agregar").addEventListener("click", async () => {
+      const ok = await accion("clientes", {
+        nombre: document.getElementById("nombreManual").value,
+        servicioId: document.getElementById("servicioManual").value,
+      });
+      if (ok) document.getElementById("nombreManual").value = "";
+    });
     document.getElementById("barbero").addEventListener("change", mostrarFila);
     setInterval(mostrarFila, 10000);
     cargarDatos();

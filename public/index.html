@@ -35,14 +35,24 @@
   <script>
     let numeroTurno = null;
 
+    // Identificador del celular: se crea una vez y se guarda en el navegador
+    function idCelular() {
+      let id = localStorage.getItem("cuantofalta-celular");
+      if (!id) {
+        id = Date.now() + "-" + Math.random().toString(36).slice(2);
+        localStorage.setItem("cuantofalta-celular", id);
+      }
+      return id;
+    }
+
     // 1. Llenar las listas de servicios y barberos
     async function cargarDatos() {
-      const respuesta = await fetch("/api/datos");
-      const datos = await respuesta.json();
+      const datos = await (await fetch("/api/datos")).json();
       document.getElementById("servicio").innerHTML = datos.servicios
         .map(s => `<option value="${s.id}">${s.nombre} (${s.minutos} min)</option>`).join("");
-      document.getElementById("barbero").innerHTML = datos.barberos
-        .map(b => `<option value="${b.id}">${b.nombre}</option>`).join("");
+      document.getElementById("barbero").innerHTML =
+        `<option value="auto">El que esté libre primero</option>` +
+        datos.barberos.map(b => `<option value="${b.id}">${b.nombre}</option>`).join("");
     }
 
     // 2. Pedir el turno al servidor
@@ -51,6 +61,7 @@
         nombre: document.getElementById("nombre").value,
         servicioId: document.getElementById("servicio").value,
         barberoId: document.getElementById("barbero").value,
+        dispositivoId: idCelular(),
       };
       const respuesta = await fetch("/api/turnos", {
         method: "POST",
@@ -58,11 +69,16 @@
         body: JSON.stringify(cuerpo),
       });
       const datos = await respuesta.json();
+      if (respuesta.status === 409) return mostrarTurno(datos.numero); // ya tenía un turno
       if (!respuesta.ok) {
         document.getElementById("error").textContent = datos.error;
         return;
       }
-      numeroTurno = datos.numero;
+      mostrarTurno(datos.numero);
+    }
+
+    function mostrarTurno(numero) {
+      numeroTurno = numero;
       document.getElementById("formulario").classList.add("oculto");
       document.getElementById("miTurno").classList.remove("oculto");
       actualizarTurno();
@@ -73,17 +89,23 @@
     async function actualizarTurno() {
       const respuesta = await fetch("/api/turnos/" + numeroTurno);
       const datos = await respuesta.json();
-      document.getElementById("numero").textContent = datos.numero;
+      const posicion = document.getElementById("posicion");
+      const minutos = document.getElementById("minutos");
+      if (!respuesta.ok) {
+        posicion.textContent = datos.error;
+        return;
+      }
+      document.getElementById("numero").textContent = datos.numero + " con " + datos.barbero;
+      minutos.textContent = "";
       if (datos.estado === "EN_SILLA") {
-        document.getElementById("posicion").textContent = "¡Es tu turno! Pasa a la silla.";
-        document.getElementById("minutos").textContent = "";
+        posicion.textContent = "¡Es tu turno! Pasa a la silla.";
+      } else if (datos.estado === "AUSENTE") {
+        posicion.textContent = "Te llamaron y no estabas. Habla con el barbero.";
       } else if (datos.estado === "ATENDIDO") {
-        document.getElementById("posicion").textContent = "Ya fuiste atendido. ¡Gracias!";
-        document.getElementById("minutos").textContent = "";
+        posicion.textContent = "Ya fuiste atendido. ¡Gracias!";
       } else {
-        document.getElementById("posicion").textContent = "Vas en el puesto " + datos.posicion;
-        document.getElementById("minutos").textContent =
-          datos.minutos < 5 ? "Ya casi" : "aprox. " + datos.minutos + " min";
+        posicion.textContent = "Vas en el puesto " + datos.posicion;
+        minutos.textContent = datos.minutos < 5 ? "Ya casi es tu turno" : "aprox. " + datos.minutos + " min";
       }
     }
 

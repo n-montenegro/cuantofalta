@@ -11,3 +11,17 @@ button { width: 100%; margin-top: 20px; padding: 14px; font-size: 17px; font-wei
 .oculto { display: none; }
 ul { padding-left: 20px; }
 .silla { background: #f2f4f7; padding: 12px; border-radius: 8px; }
+.fila-botones { display: flex; gap: 10px; }
+.fila-botones button { margin-top: 10px; }
+button.secundario { background: #4a5563; font-size: 15px; padding: 12px; }
+button:disabled { opacity: 0.4; cursor: default; }
+button:disabled { opacity: 0.45; cursor: default; }
+.secundario { background: #fff; color: #c3343b; border: 2px solid #c3343b; }
+.fila-botones { display: flex; gap: 10px; }
+.fila-botones button { margin-top: 10px; }
+details { margin-top: 20px; border-top: 1px solid #dde2e8; padding-top: 12px; }
+summary { cursor: pointer; font-weight: bold; }
+.botones { display: flex; gap: 10px; }
+.secundario { background: #fff; color: #c3343b; border: 2px solid #c3343b; margin-top: 10px; }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+#servicioManual { margin-top: 8px; }
