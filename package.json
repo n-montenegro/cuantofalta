@@ -1,11 +1,11 @@
 {
   "name": "cuantofalta",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Fila virtual con tiempo estimado de espera para barberías que atienden por orden de llegada",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "test": "node --test tests/fila.test.js"
+    "test": "node --test tests/fabricas.test.js tests/comandos.test.js tests/fila.test.js tests/hormigas.test.js tests/api.test.js"
   },
   "author": "Equipo CuántoFalta - UMB",
   "license": "MIT",

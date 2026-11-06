@@ -1,28 +1,20 @@
 # Pruebas de CuántoFalta
 
-Esta carpeta guarda las pruebas del proyecto.
-
-## Cómo ejecutarlas
-
-Desde la carpeta principal del proyecto:
+Se ejecutan desde la carpeta principal con:
 
 ```
 npm test
 ```
 
-No hay que instalar nada extra: se usa el módulo de pruebas que ya viene con Node.js (`node:test`).
-
-## Pruebas actuales
+Usan `node:test`, que ya viene con Node.js (no hay que instalar nada extra). Los casos CP-01 a CP-08 corresponden al plan de pruebas de la Guía 6.
 
 | Archivo | Qué revisa |
-| --- | --- |
-| `fila.test.js` | Que no se pueda crear un turno sin nombre |
-| `fila.test.js` | Que la espera sume los servicios de quienes están antes |
-| `fila.test.js` | Que el botón Siguiente mueva bien a los clientes |
+|---|---|
+| `fabricas.test.js` | Factory Method: validaciones, turno QR (CP-01), un turno por celular (CP-02), "el que esté libre primero" (CP-03), turno manual |
+| `comandos.test.js` | Command: Siguiente, duración de 4 min descartada (CP-05), Deshacer (CP-06), No está (CP-07), Agregar cliente (CP-08), historial por barbero |
+| `fila.test.js` | Cálculo de espera, promedio real, valores límite 4/5/90/91 min y redondeo |
+| `hormigas.test.js` | Colonia de hormigas: fórmula de feromona, restauración, explotación y exploración |
+| `api.test.js` | Integración: levanta el servidor y prueba la API con códigos 201, 400, 404 y 409 |
+| `ayudas.js` | Funciones de apoyo (hora fija y servicio limpio); no es una prueba |
 
-## Pruebas pendientes (próximas entregas)
-
-- Deshacer la última acción del barbero.
-- Marcar a un cliente como "No está".
-- Un solo turno por celular.
-- Turnos agregados a mano por el barbero.
+Resultado actual: **29 pruebas, 29 aprobadas.**
