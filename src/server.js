@@ -9,6 +9,7 @@ const FilaService = require("./nucleo/FilaService");
 const turnosRutas = require("./rutas/turnosRutas");
 const barberosRutas = require("./rutas/barberosRutas");
 const manejoErrores = require("./utilidades/manejoErrores");
+const { obtenerIpLocal } = require("./utilidades/direccionRed");
 
 function crearApp(filaService = new FilaService()) {
   const app = express();
