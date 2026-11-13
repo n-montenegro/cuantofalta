@@ -43,6 +43,11 @@ if (require.main === module) {
   crearApp().listen(PUERTO, () => {
     console.log(`CuántoFalta funcionando en http://localhost:${PUERTO}`);
     console.log(`Panel del barbero:      http://localhost:${PUERTO}/barbero.html`);
+    const ip = obtenerIpLocal();
+    if (ip) {
+      console.log(`Desde los celulares (misma WiFi): http://${ip}:${PUERTO}`);
+    }
+    console.log("Para apagar el servidor cierre esta ventana o presione Ctrl + C");
   });
 }
 
