@@ -119,8 +119,6 @@ Diagrama de clases: [documentacion/diagramas/diagrama-clases.md](documentacion/d
 
 ## Cómo ejecutar el proyecto
 
-## Cómo ejecutar el proyecto
-
 ### Opción A: ejecutable (no hay que instalar nada)
 
 1. Entrar a la sección **Releases** de este repositorio y descargar `cuantofalta-win.exe` (Windows) o `cuantofalta-linux` (Linux).
