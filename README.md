@@ -117,34 +117,13 @@ Diagrama de clases: [documentacion/diagramas/diagrama-clases.md](documentacion/d
 - **Datos en memoria** en `repositorio.js`: es el único archivo que guarda información, para cambiarlo luego por una base de datos.
 - **Errores propios** (`ErrorValidacion`, `ErrorNoEncontrado`, `ErrorConflicto`) y un middleware que los convierte en respuestas JSON.
 
-## Cómo ejecutar el proyecto
+### Opción A: desde GitHub, sin instalar nada (Codespaces)
 
-### Opción A: ejecutable (no hay que instalar nada)
+[![Abrir en GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/n-montenegro/cuantofalta)
 
-1. Entrar a la sección **Releases** de este repositorio y descargar `cuantofalta-win.exe` (Windows) o `cuantofalta-linux` (Linux).
-2. Abrir el archivo. Si Windows muestra "Windows protegió su PC", elegir **Más información → Ejecutar de todas formas** (aparece porque el ejecutable no tiene firma digital).
-3. Si el firewall pregunta, permitir el acceso en **redes privadas**. Es necesario para que entren los celulares.
-4. La ventana muestra las direcciones:
-   - Cliente: http://localhost:3000
-   - Barbero: http://localhost:3000/barbero.html
-   - Celulares: la dirección con la IP del equipo, por ejemplo `http://192.168.1.10:3000`
-5. Para apagarlo, cerrar la ventana.
-
-### Opción B: desde el código fuente
-
-1. Instalar [Node.js](https://nodejs.org) (versión LTS).
-2. Clonar este repositorio y abrir una terminal en su carpeta.
-3. Instalar dependencias: `npm install`
-4. Iniciar el servidor: `npm start`
-5. Abrir las direcciones que muestra la terminal.
-6. Ejecutar las pruebas: `npm test`
-7. Generar el ejecutable localmente (opcional): `npm run build` (queda en la carpeta `dist/`)
-
-### Cómo se genera el ejecutable
-
-El ejecutable no se sube al código. Cuando el equipo publica una versión en **Releases**, GitHub Actions (`.github/workflows/ejecutable.yml`) corre las 29 pruebas, y solo si todas pasan genera el ejecutable con `pkg` y lo adjunta a esa versión. Así nunca se publica una versión con errores.
-
-Rastro de feromona del algoritmo (para la demostración): http://localhost:3000/api/feromonas
+1. Pulsar el botón y luego **Create codespace**. El servidor arranca solo.
+2. Abrir el aviso **Open in Browser** (cliente). El barbero entra agregando `/barbero.html`.
+3. Para los celulares: pestaña **Ports**, puerto 3000, **Port Visibility → Public**, y abrir la dirección que aparece.
 
 ## Pruebas
 
