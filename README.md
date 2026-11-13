@@ -32,6 +32,8 @@ En las barberías de barrio que no trabajan con citas, el cliente solo sabe cuá
 | Agregar cliente sin celular | HU-04 | ✅ |
 | Espera calculada con el promedio real de cada barbero (duraciones de 5 a 90 min) | HU-02 | ✅ |
 | Validaciones y mensajes de error claros (400, 404, 409) | Todas | ✅ |
+| Muestra la dirección para conectar los celulares al iniciar | HU-02 | ✅ |
+| Ejecutable para Windows y Linux generado automáticamente | — | ✅ |
 
 ## Tecnologías utilizadas
 
@@ -40,6 +42,8 @@ En las barberías de barrio que no trabajan con citas, el cliente solo sabe cuá
 - HTML y CSS sin frameworks (pantallas)
 - `node:test` (pruebas automatizadas, incluido en Node.js)
 - Git y GitHub (control de versiones)
+- - GitHub Actions (ejecuta las pruebas en cada cambio y genera el ejecutable)
+- pkg (empaqueta Node.js, el código y las pantallas en un solo ejecutable)
 - Kanban (organización del trabajo)
 
 ## Estructura actual del proyecto
@@ -49,6 +53,10 @@ cuantofalta/
 ├── README.md
 ├── package.json
 ├── .gitignore
+├── .github/
+│   └── workflows/
+│       ├── pruebas.yml              Corre las pruebas en cada cambio
+│       └── ejecutable.yml           Genera el ejecutable al publicar una versión
 ├── public/                          Pantallas
 │   ├── index.html                   Cliente: tomar turno y ver la espera
 │   ├── barbero.html                 Panel del barbero
@@ -76,12 +84,13 @@ cuantofalta/
 │   │       └── AsignadorHormigas.js Algoritmo de colonia de hormigas
 │   ├── datos/
 │   │   └── repositorio.js           Datos en memoria
-│   └── utilidades/                  Errores, validaciones y middleware
+│   └── utilidades/                  Errores, validaciones, middleware e IP de la red
 ├── tests/                           Pruebas automatizadas
 └── documentacion/
     ├── descripcion_proyecto.md
     ├── patrones/                    Un documento por patrón
-    └── diagramas/                   Diagrama de clases y flujo (Mermaid)
+    ├── diagramas/                   Diagrama de clases y flujo (Mermaid)
+    └── evidencias/                  Capturas de pruebas y del ejecutable
 ```
 
 ## Patrones y decisiones de construcción
@@ -110,21 +119,39 @@ Diagrama de clases: [documentacion/diagramas/diagrama-clases.md](documentacion/d
 
 ## Cómo ejecutar el proyecto
 
+## Cómo ejecutar el proyecto
+
+### Opción A: ejecutable (no hay que instalar nada)
+
+1. Entrar a la sección **Releases** de este repositorio y descargar `cuantofalta-win.exe` (Windows) o `cuantofalta-linux` (Linux).
+2. Abrir el archivo. Si Windows muestra "Windows protegió su PC", elegir **Más información → Ejecutar de todas formas** (aparece porque el ejecutable no tiene firma digital).
+3. Si el firewall pregunta, permitir el acceso en **redes privadas**. Es necesario para que entren los celulares.
+4. La ventana muestra las direcciones:
+   - Cliente: http://localhost:3000
+   - Barbero: http://localhost:3000/barbero.html
+   - Celulares: la dirección con la IP del equipo, por ejemplo `http://192.168.1.10:3000`
+5. Para apagarlo, cerrar la ventana.
+
+### Opción B: desde el código fuente
+
 1. Instalar [Node.js](https://nodejs.org) (versión LTS).
 2. Clonar este repositorio y abrir una terminal en su carpeta.
 3. Instalar dependencias: `npm install`
 4. Iniciar el servidor: `npm start`
-5. Abrir en el navegador:
-   - Cliente: http://localhost:3000
-   - Barbero: http://localhost:3000/barbero.html
-   - Feromonas del algoritmo: http://localhost:3000/api/feromonas
+5. Abrir las direcciones que muestra la terminal.
 6. Ejecutar las pruebas: `npm test`
+7. Generar el ejecutable localmente (opcional): `npm run build` (queda en la carpeta `dist/`)
 
-Para probar con celulares, conectarlos a la misma red WiFi del portátil y abrir `http://IP-DEL-PORTATIL:3000`.
+### Cómo se genera el ejecutable
+
+El ejecutable no se sube al código. Cuando el equipo publica una versión en **Releases**, GitHub Actions (`.github/workflows/ejecutable.yml`) corre las 29 pruebas, y solo si todas pasan genera el ejecutable con `pkg` y lo adjunta a esa versión. Así nunca se publica una versión con errores.
+
+Rastro de feromona del algoritmo (para la demostración): http://localhost:3000/api/feromonas
 
 ## Pruebas
 
 29 pruebas automatizadas con `node:test` que cubren las fábricas, los comandos, el cálculo de espera, el algoritmo de hormigas y la API. Ver [tests/README.md](tests/README.md).
+Las pruebas también se ejecutan automáticamente en GitHub Actions (`.github/workflows/pruebas.yml`) cada vez que se sube un cambio a `main`. El resultado se ve en la pestaña **Actions** del repositorio. Las capturas están en [documentacion/evidencias](documentacion/evidencias/README.md).
 
 ## Integrantes del equipo
 
@@ -136,7 +163,7 @@ Para probar con celulares, conectarlos a la misma red WiFi del portátil y abrir
 
 ## Estado actual del proyecto
 
-**Segunda entrega (v0.2.0):** las cuatro historias de usuario están implementadas con Factory Method y Command, la asignación de barbero usa colonia de hormigas y todas las pruebas pasan.
+**Segunda entrega (v0.2.0):** las cuatro historias de usuario están implementadas con Factory Method y Command, la asignación de barbero usa colonia de hormigas, las 29 pruebas pasan en GitHub Actions y el proyecto se distribuye como ejecutable para Windows y Linux desde la sección Releases.
 
 ## Próximos avances
 
