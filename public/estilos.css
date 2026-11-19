@@ -1,27 +1,205 @@
-/* Estilos sencillos compartidos por las dos pantallas */
-body { font-family: Arial, sans-serif; background: #f2f4f7; margin: 0; padding: 24px; color: #222; }
-.tarjeta { background: #fff; max-width: 420px; margin: 0 auto; padding: 24px; border-radius: 12px; border: 1px solid #dde2e8; }
-h1 { font-size: 24px; margin: 0 0 4px; }
-.sub { color: #666; margin: 0 0 20px; }
-label { display: block; font-size: 14px; color: #555; margin: 14px 0 6px; }
-input, select { width: 100%; padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
-button { width: 100%; margin-top: 20px; padding: 14px; font-size: 17px; font-weight: bold; color: #fff; background: #c3343b; border: none; border-radius: 8px; cursor: pointer; }
-.error { color: #c3343b; margin-top: 12px; }
-.grande { font-size: 40px; font-weight: bold; margin: 8px 0; }
-.oculto { display: none; }
-ul { padding-left: 20px; }
-.silla { background: #f2f4f7; padding: 12px; border-radius: 8px; }
-.fila-botones { display: flex; gap: 10px; }
-.fila-botones button { margin-top: 10px; }
-button.secundario { background: #4a5563; font-size: 15px; padding: 12px; }
-button:disabled { opacity: 0.4; cursor: default; }
-button:disabled { opacity: 0.45; cursor: default; }
-.secundario { background: #fff; color: #c3343b; border: 2px solid #c3343b; }
-.fila-botones { display: flex; gap: 10px; }
-.fila-botones button { margin-top: 10px; }
-details { margin-top: 20px; border-top: 1px solid #dde2e8; padding-top: 12px; }
-summary { cursor: pointer; font-weight: bold; }
+/* estilos.css — estilos compartidos por todas las pantallas de CuántoFalta.
+   Colores inspirados en el poste de barbería: rojo, azul y crema
+   sobre un fondo carbón. Sin frameworks ni fuentes externas para que
+   funcione aunque la barbería no tenga internet (solo la red WiFi). */
+
+:root {
+  --carbon: #16181d;
+  --carbon-2: #1f2229;
+  --carbon-3: #2a2e37;
+  --crema: #f6f1e7;
+  --papel: #fffdf8;
+  --tinta: #1d1f24;
+  --gris: #6b6f78;
+  --linea: #e6e0d4;
+  --rojo: #c8323a;
+  --rojo-oscuro: #a3262d;
+  --azul: #2c5aa0;
+  --verde: #2f8a57;
+  --ambar: #d08a1c;
+  --radio: 16px;
+  --sombra: 0 1px 2px rgba(22, 24, 29, .06), 0 8px 24px rgba(22, 24, 29, .08);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  background: var(--crema);
+  color: var(--tinta);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* ---------- Encabezado con el poste de barbería ---------- */
+.barra {
+  background: var(--carbon);
+  color: var(--crema);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+}
+.barra::after {           /* franja del poste de barbería */
+  content: "";
+  position: absolute; left: 0; right: 0; bottom: -6px; height: 6px;
+  background: repeating-linear-gradient(-45deg, var(--rojo) 0 12px, var(--papel) 12px 24px, var(--azul) 24px 36px, var(--papel) 36px 48px);
+}
+.marca { font-weight: 800; font-size: 20px; letter-spacing: -.3px; display: flex; align-items: center; gap: 8px; }
+.marca em { font-style: normal; color: #f2b8bb; }
+.barra .rol { margin-left: auto; font-size: 13px; color: #aab0bb; text-transform: uppercase; letter-spacing: 1.5px; }
+
+.contenedor { max-width: 460px; margin: 0 auto; padding: 28px 16px 48px; }
+.contenedor.ancho { max-width: 1040px; }
+
+/* ---------- Tarjetas ---------- */
+.tarjeta {
+  background: var(--papel);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+  padding: 22px;
+  box-shadow: var(--sombra);
+  margin-bottom: 16px;
+}
+.tarjeta h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--gris); margin: 0 0 14px; font-weight: 700; }
+
+h1 { font-size: 28px; line-height: 1.15; margin: 0 0 6px; letter-spacing: -.5px; }
+.sub { color: var(--gris); margin: 0 0 22px; line-height: 1.45; }
+
+/* ---------- Formularios ---------- */
+label { display: block; font-size: 13px; font-weight: 600; color: #4a4e57; margin: 16px 0 6px; }
+input, select {
+  width: 100%; padding: 13px 14px; font-size: 16px; font-family: inherit;
+  border: 1.5px solid var(--linea); border-radius: 12px; background: #fff; color: var(--tinta);
+  transition: border-color .15s;
+}
+input:focus, select:focus { outline: none; border-color: var(--azul); box-shadow: 0 0 0 3px rgba(44, 90, 160, .15); }
+
+/* Opciones en forma de "chips" (servicio y barbero) */
+.opciones { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.opcion {
+  border: 1.5px solid var(--linea); border-radius: 12px; padding: 12px; background: #fff;
+  cursor: pointer; text-align: left; font: inherit; color: inherit; transition: all .15s;
+}
+.opcion b { display: block; font-size: 15px; }
+.opcion small { color: var(--gris); font-size: 12.5px; }
+.opcion.elegida { border-color: var(--rojo); background: #fdf0f0; box-shadow: inset 0 0 0 1px var(--rojo); }
+.opcion.ancha { grid-column: 1 / -1; }
+.opcion:disabled { opacity: .45; cursor: not-allowed; }
+
+/* ---------- Botones ---------- */
+button { font-family: inherit; }
+.boton {
+  width: 100%; margin-top: 20px; padding: 15px; font-size: 17px; font-weight: 700;
+  color: #fff; background: var(--rojo); border: none; border-radius: 12px; cursor: pointer;
+  transition: background .15s, transform .05s;
+}
+.boton:hover { background: var(--rojo-oscuro); }
+.boton:active { transform: scale(.985); }
+.boton.secundario { background: #fff; color: var(--tinta); border: 1.5px solid var(--linea); }
+.boton.secundario:hover { border-color: var(--tinta); }
+.boton.oscuro { background: var(--carbon); }
+.boton.oscuro:hover { background: var(--carbon-3); }
+.boton.peque { width: auto; margin: 0; padding: 9px 14px; font-size: 14px; }
+.boton:disabled { opacity: .4; cursor: not-allowed; }
 .botones { display: flex; gap: 10px; }
-.secundario { background: #fff; color: #c3343b; border: 2px solid #c3343b; margin-top: 10px; }
-button:disabled { opacity: 0.4; cursor: not-allowed; }
-#servicioManual { margin-top: 8px; }
+.botones .boton { margin-top: 10px; }
+
+.error { color: var(--rojo); font-size: 14px; margin: 12px 0 0; min-height: 1em; }
+.aviso { background: #fff7e6; border: 1px solid #f0d9a8; color: #7a5410; padding: 10px 12px; border-radius: 10px; font-size: 14px; }
+.oculto { display: none !important; }
+
+/* ---------- Pantalla del cliente: mi turno ---------- */
+.ticket {
+  background: var(--carbon); color: var(--crema); border-radius: 20px; padding: 26px 22px; text-align: center;
+  position: relative; overflow: hidden; box-shadow: var(--sombra);
+}
+.ticket .etiqueta { font-size: 12px; text-transform: uppercase; letter-spacing: 2px; color: #9aa1ad; }
+.ticket .numero { font-size: 64px; font-weight: 800; line-height: 1; margin: 6px 0 4px; font-variant-numeric: tabular-nums; }
+.ticket .detalle { color: #c9ccd3; font-size: 15px; }
+.ticket .corte { border-top: 2px dashed var(--carbon-3); margin: 20px -22px; }
+.ticket .grande { font-size: 44px; font-weight: 800; margin: 2px 0; font-variant-numeric: tabular-nums; }
+.ticket .grande small { font-size: 18px; font-weight: 600; color: #c9ccd3; }
+.ticket .estado { font-size: 18px; font-weight: 700; }
+.ticket.silla { background: var(--verde); }
+.ticket.silla .detalle, .ticket.silla .etiqueta { color: #e3f4ea; }
+.ticket.fin { background: var(--carbon-3); }
+
+.posiciones { display: flex; justify-content: center; gap: 6px; margin-top: 14px; flex-wrap: wrap; }
+.posiciones i { width: 12px; height: 12px; border-radius: 50%; background: var(--carbon-3); display: inline-block; }
+.posiciones i.yo { background: var(--rojo); box-shadow: 0 0 0 3px rgba(200, 50, 58, .35); }
+.posiciones i.silla { background: var(--verde); }
+
+.pulso { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #5bd08b; margin-right: 6px; animation: pulso 1.6s infinite; }
+@keyframes pulso { 0% { box-shadow: 0 0 0 0 rgba(91, 208, 139, .7); } 70% { box-shadow: 0 0 0 8px rgba(91, 208, 139, 0); } 100% { box-shadow: 0 0 0 0 rgba(91, 208, 139, 0); } }
+.nota { text-align: center; color: var(--gris); font-size: 13px; margin-top: 14px; }
+
+/* ---------- Panel del barbero ---------- */
+.silla-actual { background: var(--carbon); color: var(--crema); border-radius: 14px; padding: 18px; }
+.silla-actual .vacia { color: #8f96a2; }
+.silla-actual .nombre { font-size: 24px; font-weight: 800; }
+.silla-actual .info { color: #b9bec8; font-size: 14px; margin-top: 4px; }
+.reloj { font-variant-numeric: tabular-nums; }
+
+.boton.gigante { font-size: 22px; padding: 22px; border-radius: 14px; }
+
+.lista { list-style: none; padding: 0; margin: 0; }
+.lista li { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--linea); }
+.lista li:last-child { border-bottom: none; }
+.lista .num { width: 38px; height: 38px; border-radius: 10px; background: var(--crema); display: grid; place-items: center; font-weight: 800; flex-shrink: 0; }
+.lista .quien b { display: block; }
+.lista .quien small { color: var(--gris); }
+.lista .vacia { color: var(--gris); justify-content: center; }
+.chip { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 99px; background: #eef2fa; color: var(--azul); margin-left: auto; white-space: nowrap; }
+.chip.manual { background: #fff1e0; color: #a0620c; }
+
+.contador { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+.contador div { background: var(--crema); border-radius: 12px; padding: 10px; text-align: center; }
+.contador b { display: block; font-size: 22px; }
+.contador small { color: var(--gris); font-size: 12px; }
+
+/* ---------- Panel del dueño ---------- */
+.rejilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.kpi { background: var(--papel); border: 1px solid var(--linea); border-radius: 14px; padding: 16px; }
+.kpi small { color: var(--gris); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+.kpi b { display: block; font-size: 30px; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.tabla-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th.tau { text-transform: none; }
+th { text-align: left; color: var(--gris); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .8px; padding: 8px 6px; border-bottom: 1.5px solid var(--linea); }
+td { padding: 10px 6px; border-bottom: 1px solid var(--linea); }
+td input { padding: 7px 9px; width: 80px; font-size: 14px; }
+.en-linea { display: flex; gap: 8px; margin-top: 12px; }
+.en-linea input { flex: 1; }
+.en-linea input.corto { flex: 0 0 90px; }
+.interruptor { position: relative; width: 44px; height: 26px; display: inline-block; }
+.interruptor input { opacity: 0; width: 0; height: 0; }
+.interruptor span { position: absolute; inset: 0; background: #cfd3da; border-radius: 99px; cursor: pointer; transition: .2s; }
+.interruptor span::before { content: ""; position: absolute; width: 20px; height: 20px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; }
+.interruptor input:checked + span { background: var(--verde); }
+.interruptor input:checked + span::before { transform: translateX(18px); }
+.barra-feromona { height: 8px; background: var(--crema); border-radius: 99px; overflow: hidden; min-width: 80px; }
+.barra-feromona i { display: block; height: 100%; background: linear-gradient(90deg, var(--ambar), var(--rojo)); }
+.enlaces { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.enlaces a { display: block; padding: 12px; border: 1.5px solid var(--linea); border-radius: 12px; text-decoration: none; color: var(--tinta); font-weight: 600; font-size: 14px; }
+.enlaces a:hover { border-color: var(--tinta); }
+.enlaces a small { display: block; color: var(--gris); font-weight: 400; }
+.estado-bd { font-size: 13px; color: var(--gris); }
+.estado-bd b { color: var(--verde); }
+
+/* ---------- Aviso flotante ---------- */
+.toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px);
+  background: var(--carbon); color: var(--crema); padding: 12px 18px; border-radius: 12px;
+  font-size: 15px; opacity: 0; transition: .25s; pointer-events: none; z-index: 10; max-width: 90vw;
+}
+.toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.malo { background: var(--rojo); }
+
+@media (max-width: 380px) {
+  .opciones { grid-template-columns: 1fr; }
+  .ticket .numero { font-size: 54px; }
+}
