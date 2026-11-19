@@ -3,37 +3,58 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CuántoFalta - Tomar turno</title>
+  <meta name="theme-color" content="#16181d">
+  <title>CuántoFalta · Tomar turno</title>
   <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
-  <div class="tarjeta">
-    <h1>CuántoFalta</h1>
-    <p class="sub">Toma tu turno y mira cuánto te falta</p>
+  <header class="barra">
+    <div class="marca">✂ <span>Cuánto<em>Falta</em></span></div>
+    <div class="rol">Cliente</div>
+  </header>
 
-    <!-- Formulario para pedir turno -->
-    <div id="formulario">
-      <label for="nombre">Tu nombre</label>
-      <input id="nombre" placeholder="Ej: Andrés">
-      <label for="servicio">Servicio</label>
-      <select id="servicio"></select>
-      <label for="barbero">Barbero</label>
-      <select id="barbero"></select>
-      <button id="tomar">Tomar turno</button>
-      <p id="error" class="error"></p>
-    </div>
+  <main class="contenedor">
+    <!-- Paso 1: formulario para pedir turno (HU-01) -->
+    <section id="formulario">
+      <h1>Pide tu turno sin hacer fila</h1>
+      <p class="sub">Te decimos en qué puesto vas y cuánto te falta. Puedes salir y volver a tiempo.</p>
 
-    <!-- Información del turno (se muestra después de tomarlo) -->
-    <div id="miTurno" class="oculto">
-      <p>Tu turno es el <b id="numero"></b></p>
-      <p id="posicion"></p>
-      <p class="grande" id="minutos"></p>
-      <p class="sub">Se actualiza solo cada 15 segundos.</p>
-    </div>
-  </div>
+      <div class="tarjeta">
+        <label for="nombre">¿Cómo te llamas?</label>
+        <input id="nombre" placeholder="Ej: Andrés" maxlength="40" autocomplete="given-name">
 
+        <label>¿Qué te vas a hacer?</label>
+        <div class="opciones" id="servicios"></div>
+
+        <label>¿Con quién?</label>
+        <div class="opciones" id="barberos"></div>
+
+        <button class="boton" id="tomar">Tomar turno</button>
+        <p id="error" class="error"></p>
+      </div>
+    </section>
+
+    <!-- Paso 2: mi turno (HU-02) -->
+    <section id="miTurno" class="oculto">
+      <div class="ticket" id="ticket">
+        <div class="etiqueta">Tu turno</div>
+        <div class="numero" id="numero">—</div>
+        <div class="detalle" id="detalle"></div>
+        <div class="corte"></div>
+        <div id="estado"></div>
+        <div class="posiciones" id="posiciones"></div>
+      </div>
+      <p class="nota"><span class="pulso"></span>Se actualiza solo cada 15 segundos · <span id="hora"></span></p>
+      <button class="boton secundario" id="cancelar">Ya no puedo esperar, cancelar turno</button>
+      <button class="boton oculto" id="otro">Tomar otro turno</button>
+    </section>
+  </main>
+
+  <script src="comun.js"></script>
   <script>
-    let numeroTurno = null;
+    const GUARDADO = "cuantofalta-turno";
+    let eleccion = { servicioId: null, barberoId: "auto" };
+    let temporizador = null;
 
     // Identificador del celular: se crea una vez y se guarda en el navegador
     function idCelular() {
@@ -45,72 +66,143 @@
       return id;
     }
 
-    // 1. Llenar las listas de servicios y barberos
+    // 1. Mostrar servicios y barberos como botones
     async function cargarDatos() {
-      const datos = await (await fetch("/api/datos")).json();
-      document.getElementById("servicio").innerHTML = datos.servicios
-        .map(s => `<option value="${s.id}">${s.nombre} (${s.minutos} min)</option>`).join("");
-      document.getElementById("barbero").innerHTML =
-        `<option value="auto">El que esté libre primero</option>` +
-        datos.barberos.map(b => `<option value="${b.id}">${b.nombre}</option>`).join("");
+      const { ok, datos } = await api("/datos");
+      if (!ok) return (document.getElementById("error").textContent = datos.error);
+
+      eleccion.servicioId = datos.servicios[0]?.id ?? null;
+      document.getElementById("servicios").innerHTML = datos.servicios.map(s => `
+        <button class="opcion" data-servicio="${s.id}">
+          <b>${escapar(s.nombre)}</b><small>~${s.minutos} min</small>
+        </button>`).join("");
+
+      const activos = datos.barberos.filter(b => b.activo);
+      document.getElementById("barberos").innerHTML = `
+        <button class="opcion ancha" data-barbero="auto">
+          <b>⚡ El que esté libre primero</b><small>Te asignamos al que te atienda más rápido</small>
+        </button>` + activos.map(b => `
+        <button class="opcion" data-barbero="${b.id}"><b>${escapar(b.nombre)}</b><small>Barbero</small></button>`).join("");
+
+      marcarElegidas();
     }
+
+    function marcarElegidas() {
+      document.querySelectorAll("[data-servicio]").forEach(b =>
+        b.classList.toggle("elegida", Number(b.dataset.servicio) === eleccion.servicioId));
+      document.querySelectorAll("[data-barbero]").forEach(b =>
+        b.classList.toggle("elegida", b.dataset.barbero === String(eleccion.barberoId)));
+    }
+
+    document.getElementById("servicios").addEventListener("click", e => {
+      const boton = e.target.closest("[data-servicio]");
+      if (boton) { eleccion.servicioId = Number(boton.dataset.servicio); marcarElegidas(); }
+    });
+    document.getElementById("barberos").addEventListener("click", e => {
+      const boton = e.target.closest("[data-barbero]");
+      if (boton) { eleccion.barberoId = boton.dataset.barbero; marcarElegidas(); }
+    });
 
     // 2. Pedir el turno al servidor
     async function tomarTurno() {
-      const cuerpo = {
+      const boton = document.getElementById("tomar");
+      boton.disabled = true;
+      const { ok, estado, datos } = await api("/turnos", "POST", {
         nombre: document.getElementById("nombre").value,
-        servicioId: document.getElementById("servicio").value,
-        barberoId: document.getElementById("barbero").value,
+        servicioId: eleccion.servicioId,
+        barberoId: eleccion.barberoId,
         dispositivoId: idCelular(),
-      };
-      const respuesta = await fetch("/api/turnos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(cuerpo),
       });
-      const datos = await respuesta.json();
-      if (respuesta.status === 409) return mostrarTurno(datos.numero); // ya tenía un turno
-      if (!respuesta.ok) {
-        document.getElementById("error").textContent = datos.error;
-        return;
-      }
+      boton.disabled = false;
+      if (estado === 409 && datos.numero) return mostrarTurno(datos.numero); // ya tenía un turno
+      if (!ok) return (document.getElementById("error").textContent = datos.error);
       mostrarTurno(datos.numero);
     }
 
     function mostrarTurno(numero) {
-      numeroTurno = numero;
+      localStorage.setItem(GUARDADO, numero);
       document.getElementById("formulario").classList.add("oculto");
       document.getElementById("miTurno").classList.remove("oculto");
       actualizarTurno();
-      setInterval(actualizarTurno, 15000);
+      clearInterval(temporizador);
+      temporizador = setInterval(actualizarTurno, 15000);
     }
 
     // 3. Consultar cuánto falta
     async function actualizarTurno() {
-      const respuesta = await fetch("/api/turnos/" + numeroTurno);
-      const datos = await respuesta.json();
-      const posicion = document.getElementById("posicion");
-      const minutos = document.getElementById("minutos");
-      if (!respuesta.ok) {
-        posicion.textContent = datos.error;
-        return;
+      const numero = localStorage.getItem(GUARDADO);
+      const { ok, datos } = await api("/turnos/" + numero);
+      document.getElementById("hora").textContent = new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
+
+      if (!ok) { // el turno ya no existe (por ejemplo, se cerró el día)
+        localStorage.removeItem(GUARDADO);
+        return volverAlFormulario();
       }
-      document.getElementById("numero").textContent = datos.numero + " con " + datos.barbero;
-      minutos.textContent = "";
-      if (datos.estado === "EN_SILLA") {
-        posicion.textContent = "¡Es tu turno! Pasa a la silla.";
-      } else if (datos.estado === "AUSENTE") {
-        posicion.textContent = "Te llamaron y no estabas. Habla con el barbero.";
-      } else if (datos.estado === "ATENDIDO") {
-        posicion.textContent = "Ya fuiste atendido. ¡Gracias!";
+      pintarTurno(datos);
+    }
+
+    function pintarTurno(t) {
+      const ticket = document.getElementById("ticket");
+      const estado = document.getElementById("estado");
+      const puntos = document.getElementById("posiciones");
+      document.getElementById("numero").textContent = t.numero;
+      document.getElementById("detalle").textContent = `${t.nombre} · ${t.servicio} con ${t.barbero}`;
+      ticket.className = "ticket";
+      puntos.innerHTML = "";
+
+      const terminado = ["ATENDIDO", "AUSENTE", "CANCELADO"].includes(t.estado);
+      document.getElementById("cancelar").classList.toggle("oculto", t.estado !== "EN_ESPERA");
+      document.getElementById("otro").classList.toggle("oculto", !terminado);
+
+      if (t.estado === "EN_ESPERA") {
+        const texto = t.minutos < 5 ? "¡Ya casi!" : `${t.minutos}<small> min</small>`;
+        estado.innerHTML = `
+          <div class="etiqueta">Te faltan aproximadamente</div>
+          <div class="grande">${texto}</div>
+          <div class="detalle">Vas en el puesto <b>${t.posicion}</b>${t.posicion === 1 ? " · eres el siguiente" : ""}</div>`;
+        // Un punto por cada persona: verde la silla, rojo tú
+        puntos.innerHTML = '<i class="silla" title="En la silla"></i>' +
+          Array.from({ length: Math.min(t.posicion, 12) }, (_, i) =>
+            `<i class="${i === t.posicion - 1 ? "yo" : ""}"></i>`).join("");
+      } else if (t.estado === "EN_SILLA") {
+        ticket.classList.add("silla");
+        estado.innerHTML = `<div class="estado">💈 ¡Es tu turno! Pasa a la silla</div>`;
+        if (navigator.vibrate) navigator.vibrate([300, 150, 300]);
       } else {
-        posicion.textContent = "Vas en el puesto " + datos.posicion;
-        minutos.textContent = datos.minutos < 5 ? "Ya casi es tu turno" : "aprox. " + datos.minutos + " min";
+        ticket.classList.add("fin");
+        const mensajes = {
+          ATENDIDO: "Ya fuiste atendido. ¡Gracias por venir!",
+          AUSENTE: "Te llamaron y no estabas. Habla con el barbero.",
+          CANCELADO: "Cancelaste tu turno.",
+        };
+        estado.innerHTML = `<div class="estado">${mensajes[t.estado]}</div>`;
+        clearInterval(temporizador);
       }
     }
 
+    async function cancelar() {
+      if (!confirm("¿Seguro que quieres cancelar tu turno?")) return;
+      const numero = localStorage.getItem(GUARDADO);
+      const { ok, datos } = await api(`/turnos/${numero}/cancelar`, "POST", { dispositivoId: idCelular() });
+      if (!ok) return avisar(datos.error, true);
+      pintarTurno(datos);
+    }
+
+    function volverAlFormulario() {
+      clearInterval(temporizador);
+      localStorage.removeItem(GUARDADO);
+      document.getElementById("miTurno").classList.add("oculto");
+      document.getElementById("formulario").classList.remove("oculto");
+      cargarDatos();
+    }
+
     document.getElementById("tomar").addEventListener("click", tomarTurno);
-    cargarDatos();
+    document.getElementById("cancelar").addEventListener("click", cancelar);
+    document.getElementById("otro").addEventListener("click", volverAlFormulario);
+
+    // Si el celular ya tenía un turno guardado, se muestra directamente
+    if (localStorage.getItem(GUARDADO)) mostrarTurno(localStorage.getItem(GUARDADO));
+    else cargarDatos();
   </script>
 </body>
 </html>
