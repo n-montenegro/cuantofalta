@@ -3,94 +3,142 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CuántoFalta - Panel del barbero</title>
+  <meta name="theme-color" content="#16181d">
+  <title>CuántoFalta · Panel del barbero</title>
   <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
-  <div class="tarjeta">
-    <h1>Panel del barbero</h1>
-    <label for="barbero">¿Quién eres?</label>
-    <select id="barbero"></select>
+  <header class="barra">
+    <div class="marca">✂ <span>Cuánto<em>Falta</em></span></div>
+    <div class="rol">Barbero</div>
+  </header>
 
-    <p><b>En la silla:</b></p>
-    <div class="silla" id="silla">Nadie</div>
-
-    <!-- Cada botón ejecuta un comando (patrón Command) -->
-    <button id="siguiente">Siguiente</button>
-    <div class="botones">
-      <button id="noEsta" class="secundario">No está</button>
-      <button id="deshacer" class="secundario">Deshacer</button>
+  <main class="contenedor">
+    <div class="tarjeta">
+      <label for="barbero" style="margin-top:0">¿Quién eres?</label>
+      <select id="barbero"></select>
+      <div class="contador">
+        <div><b id="cEspera">0</b><small>esperando</small></div>
+        <div><b id="cAtendidos">0</b><small>atendidos hoy</small></div>
+        <div><b id="cEstimado">—</b><small>espera nueva</small></div>
+      </div>
     </div>
-    <p id="error" class="error"></p>
 
-    <p><b>En espera:</b></p>
-    <ul id="espera"></ul>
+    <div class="tarjeta">
+      <h2>En la silla</h2>
+      <div class="silla-actual" id="silla"><span class="vacia">Silla libre</span></div>
 
-    <p><b>Agregar cliente sin celular:</b></p>
-    <input id="nombreManual" placeholder="Nombre del cliente">
-    <select id="servicioManual"></select>
-    <button id="agregar" class="secundario">Agregar cliente</button>
-  </div>
+      <!-- Cada botón ejecuta un comando (patrón Command) -->
+      <button class="boton gigante" id="siguiente">Siguiente ›</button>
+      <div class="botones">
+        <button class="boton secundario" id="noEsta">No está</button>
+        <button class="boton secundario" id="deshacer">↶ Deshacer</button>
+      </div>
+    </div>
 
+    <div class="tarjeta">
+      <h2>En espera</h2>
+      <ul class="lista" id="espera"></ul>
+    </div>
+
+    <div class="tarjeta">
+      <h2>Cliente sin celular</h2>
+      <input id="nombreManual" placeholder="Nombre del cliente" maxlength="40">
+      <select id="servicioManual" style="margin-top:8px"></select>
+      <button class="boton oscuro" id="agregar">+ Agregar a mi fila</button>
+    </div>
+  </main>
+
+  <script src="comun.js"></script>
   <script>
     let servicios = [];
+    let barberos = [];
+    let filaActual = null;
     const id = () => document.getElementById("barbero").value;
 
     async function cargarDatos() {
-      const datos = await (await fetch("/api/datos")).json();
+      const { datos } = await api("/datos");
       servicios = datos.servicios;
-      document.getElementById("barbero").innerHTML = datos.barberos
-        .map(b => `<option value="${b.id}">${b.nombre}</option>`).join("");
+      barberos = datos.barberos;
+      const recordado = localStorage.getItem("cuantofalta-barbero");
+      document.getElementById("barbero").innerHTML = barberos
+        .map(b => `<option value="${b.id}" ${String(b.id) === recordado ? "selected" : ""}>${escapar(b.nombre)}${b.activo ? "" : " (en descanso)"}</option>`).join("");
       document.getElementById("servicioManual").innerHTML = servicios
-        .map(s => `<option value="${s.id}">${s.nombre}</option>`).join("");
+        .map(s => `<option value="${s.id}">${escapar(s.nombre)} · ${s.minutos} min</option>`).join("");
       mostrarFila();
     }
 
-    function nombreServicio(servicioId) {
-      return servicios.find(s => s.id === servicioId).nombre;
-    }
-
-    function textoTurno(t) {
-      const marca = t.origen === "MANUAL" ? " · sin celular" : "";
-      return `Turno ${t.numero}: ${t.nombre} (${nombreServicio(t.servicioId)})${marca}`;
-    }
+    const nombreServicio = (servicioId) => (servicios.find(s => s.id === servicioId) || {}).nombre || "";
 
     function pintar(fila) {
-      document.getElementById("silla").textContent = fila.enSilla ? textoTurno(fila.enSilla) : "Nadie";
+      filaActual = fila;
+      const silla = document.getElementById("silla");
+      if (fila.enSilla) {
+        const t = fila.enSilla;
+        silla.innerHTML = `
+          <div class="nombre">#${t.numero} · ${escapar(t.nombre)}</div>
+          <div class="info">${escapar(nombreServicio(t.servicioId))} · lleva <span class="reloj" id="reloj">${minutosDesde(t.horaInicio)}</span> min</div>`;
+      } else {
+        silla.innerHTML = `<span class="vacia">Silla libre — toca "Siguiente" para llamar al primero</span>`;
+      }
+
       document.getElementById("espera").innerHTML = fila.enEspera.length
-        ? fila.enEspera.map(t => `<li>${textoTurno(t)}</li>`).join("")
-        : "<li>No hay nadie esperando</li>";
+        ? fila.enEspera.map((t, i) => `
+          <li>
+            <span class="num">${t.numero}</span>
+            <span class="quien"><b>${escapar(t.nombre)}</b><small>${escapar(nombreServicio(t.servicioId))}${i === 0 ? " · sigue" : ""}</small></span>
+            <span class="chip ${t.origen === "MANUAL" ? "manual" : ""}">${t.origen === "MANUAL" ? "Sin celular" : "QR"}</span>
+          </li>`).join("")
+        : `<li class="vacia">No hay nadie esperando</li>`;
+
+      document.getElementById("cEspera").textContent = fila.enEspera.length;
+      document.getElementById("cAtendidos").textContent = fila.atendidosHoy;
       document.getElementById("deshacer").disabled = !fila.puedeDeshacer;
+      document.getElementById("noEsta").disabled = !fila.enSilla;
+      document.getElementById("siguiente").disabled = !fila.enSilla && fila.enEspera.length === 0;
+      document.getElementById("siguiente").textContent = fila.enSilla
+        ? (fila.enEspera.length ? "Terminé · Siguiente ›" : "Terminé ✓")
+        : "Llamar al siguiente ›";
     }
 
     async function mostrarFila() {
-      pintar(await (await fetch(`/api/barberos/${id()}/fila`)).json());
+      if (!id()) return;
+      localStorage.setItem("cuantofalta-barbero", id());
+      const { ok, datos } = await api(`/barberos/${id()}/fila`);
+      if (ok) pintar(datos);
+      // Espera que vería un cliente nuevo con este barbero
+      const estado = await api("/estado");
+      const mio = estado.ok && estado.datos.barberos.find(b => String(b.id) === id());
+      document.getElementById("cEstimado").textContent = mio ? mio.esperaNuevo + "'" : "—";
     }
 
-    // Envía una acción al servidor y muestra el error si lo hay
-    async function accion(ruta, cuerpo) {
-      const respuesta = await fetch(`/api/barberos/${id()}/${ruta}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(cuerpo || {}),
-      });
-      const datos = await respuesta.json();
-      document.getElementById("error").textContent = respuesta.ok ? "" : datos.error;
-      if (respuesta.ok) pintar(datos);
-      return respuesta.ok;
+    // Envía una acción al servidor y muestra el resultado
+    async function accion(ruta, cuerpo, mensaje) {
+      const { ok, datos } = await api(`/barberos/${id()}/${ruta}`, "POST", cuerpo || {});
+      if (!ok) { avisar(datos.error, true); return false; }
+      pintar(datos);
+      if (mensaje) avisar(mensaje);
+      mostrarFila();
+      return true;
     }
 
-    document.getElementById("siguiente").addEventListener("click", () => accion("siguiente"));
-    document.getElementById("noEsta").addEventListener("click", () => accion("no-esta"));
-    document.getElementById("deshacer").addEventListener("click", () => accion("deshacer"));
+    document.getElementById("siguiente").addEventListener("click", () => accion("siguiente", null, "Listo ✓"));
+    document.getElementById("noEsta").addEventListener("click", () => accion("no-esta", null, "Marcado como ausente"));
+    document.getElementById("deshacer").addEventListener("click", () => accion("deshacer", null, "Se deshizo la última acción"));
     document.getElementById("agregar").addEventListener("click", async () => {
       const ok = await accion("clientes", {
         nombre: document.getElementById("nombreManual").value,
         servicioId: document.getElementById("servicioManual").value,
-      });
+      }, "Cliente agregado");
       if (ok) document.getElementById("nombreManual").value = "";
     });
     document.getElementById("barbero").addEventListener("change", mostrarFila);
+
+    // El reloj de la silla avanza cada 30 s sin pedir datos
+    setInterval(() => {
+      const reloj = document.getElementById("reloj");
+      if (reloj && filaActual?.enSilla) reloj.textContent = minutosDesde(filaActual.enSilla.horaInicio);
+    }, 30000);
     setInterval(mostrarFila, 10000);
     cargarDatos();
   </script>
