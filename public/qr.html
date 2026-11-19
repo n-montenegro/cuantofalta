@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CuántoFalta · Cartel QR</title>
+  <link rel="stylesheet" href="estilos.css">
+  <style>
+    /* Cartel tamaño carta para imprimir y pegar en la barbería */
+    body { background: #e9e4d8; }
+    .cartel {
+      width: 100%; max-width: 560px; margin: 32px auto; background: var(--papel); border-radius: 24px;
+      overflow: hidden; box-shadow: var(--sombra); text-align: center;
+    }
+    .cartel .arriba { background: var(--carbon); color: var(--crema); padding: 34px 24px 30px; position: relative; }
+    .cartel .arriba::after {
+      content: ""; position: absolute; left: 0; right: 0; bottom: -10px; height: 10px;
+      background: repeating-linear-gradient(-45deg, var(--rojo) 0 14px, var(--papel) 14px 28px, var(--azul) 28px 42px, var(--papel) 42px 56px);
+    }
+    .cartel h1 { font-size: 40px; margin: 6px 0 0; }
+    .cartel .arriba p { margin: 8px 0 0; color: #c9ccd3; font-size: 18px; }
+    .cartel .codigo { padding: 34px 60px 10px; }
+    .cartel .codigo svg { width: 100%; height: auto; }
+    .pasos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 10px 28px 26px; }
+    .pasos div { font-size: 14px; color: var(--gris); }
+    .pasos b { display: block; font-size: 26px; color: var(--rojo); }
+    .url { font-family: ui-monospace, Consolas, monospace; font-size: 13px; color: var(--gris); padding-bottom: 22px; }
+    .acciones { text-align: center; margin-bottom: 32px; }
+    @media print {
+      body { background: #fff; }
+      .acciones { display: none; }
+      .cartel { box-shadow: none; margin: 0 auto; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+  <div class="cartel">
+    <div class="arriba">
+      <div class="marca" style="justify-content:center;font-size:22px">✂ <span>Cuánto<em>Falta</em></span></div>
+      <h1>¿Cuánto me falta?</h1>
+      <p>Escanea, toma tu turno y espera donde quieras</p>
+    </div>
+    <div class="codigo" id="codigo"></div>
+    <div class="pasos">
+      <div><b>1</b>Escanea con la cámara</div>
+      <div><b>2</b>Escribe tu nombre y servicio</div>
+      <div><b>3</b>Mira cuánto te falta</div>
+    </div>
+    <div class="url" id="url"></div>
+  </div>
+  <div class="acciones">
+    <button class="boton peque oscuro" onclick="window.print()">🖨 Imprimir cartel</button>
+  </div>
+
+  <script src="comun.js"></script>
+  <script>
+    api("/qr").then(({ ok, datos }) => {
+      if (!ok) return;
+      document.getElementById("codigo").innerHTML = datos.svg;
+      document.getElementById("url").textContent = datos.url;
+    });
+  </script>
+</body>
+</html>
