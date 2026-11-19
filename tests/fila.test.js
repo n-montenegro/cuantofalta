@@ -32,14 +32,14 @@ test("con 3 o más registros usa el promedio real del barbero", () => {
     { barberoId: 1, servicioId: 1, minutos: 22 },
     { barberoId: 1, servicioId: 1, minutos: 24 }
   );
-  assert.strictEqual(s.filas[1].duracionEsperada(1), 22);
-  assert.strictEqual(s.filas[2].duracionEsperada(1), 30); // Carlos aún usa la base
+  assert.strictEqual(s.filaDe(1).duracionEsperada(1), 22);
+  assert.strictEqual(s.filaDe(2).duracionEsperada(1), 30); // Carlos aún usa la base
 });
 
 test("con menos de 3 registros usa la duración base", () => {
   const s = servicioNuevo();
   repositorio.duraciones.push({ barberoId: 1, servicioId: 1, minutos: 10 });
-  assert.strictEqual(s.filas[1].duracionEsperada(1), 30);
+  assert.strictEqual(s.filaDe(1).duracionEsperada(1), 30);
 });
 
 test("valores límite del filtro de duraciones (5 a 90 minutos)", () => {
