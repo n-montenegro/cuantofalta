@@ -51,12 +51,38 @@ classDiagram
     +agregarCliente(barberoId, datos)
     +deshacer(barberoId)
     +elegirBarbero(servicioId)
+    +cancelarTurno(numero, dispositivoId)
+    +vistaGeneral()
   }
   class AsignadorHormigas {
     +elegir(candidatos, servicioId)
     +depositar(barberoId, servicioId, real, base)
     +restaurar(barberoId, servicioId, valor)
   }
+
+  class Administracion {
+    +agregarBarbero(datos)
+    +cambiarEstadoBarbero(id, activo)
+    +agregarServicio(datos)
+    +cambiarDuracionServicio(id, minutos)
+    +resumen()
+    +cerrarDia()
+  }
+  class repositorio {
+    <<módulo>>
+    +conectar(ruta)
+    +guardar()
+    +cerrarDia()
+  }
+  class BaseDatos {
+    +cargar()
+    +guardar(estado)
+  }
+
+  Administracion --> FilaService
+  Administracion ..> repositorio
+  FilaService ..> repositorio : guarda después de cada acción
+  repositorio --> BaseDatos : SQLite
 
   FabricaTurnos <|-- FabricaTurnoQR
   FabricaTurnos <|-- FabricaTurnoManual
