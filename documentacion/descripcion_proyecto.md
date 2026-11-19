@@ -10,14 +10,17 @@ Muchas barberías de barrio atienden por orden de llegada. El cliente llega, ve 
 | --- | --- | --- |
 | Pantalla del cliente | `public/index.html` | Pedir turno y mostrar puesto y tiempo de espera |
 | Panel del barbero | `public/barbero.html` | Ver la fila; Siguiente, No está, Deshacer y Agregar cliente |
-| Funciones compartidas de las pantallas | `public/js/api.js` | Llamar a la API y mostrar los errores |
+| Panel del dueño | `public/admin.html` | Barberos, servicios, resumen del día y cierre de jornada (con PIN) |
+| Pantalla para TV y cartel QR | `public/pantalla.html`, `public/qr.html` | Mostrar las filas en el local e imprimir el código QR |
+| Funciones compartidas de las pantallas | `public/comun.js` | Llamar a la API, escapar texto y mostrar avisos |
 | Servidor | `src/server.js` | Armar la aplicación Express y arrancarla |
 | Rutas (API) | `src/rutas/` | Recibir las peticiones de los celulares y responder JSON |
 | Modelos | `src/modelos/` | `Turno`, `TurnoQR` y `TurnoManual` |
 | Creación de turnos | `src/creacion/` | Patrón Factory Method |
 | Núcleo de la fila | `src/nucleo/` | `Fila`, `FilaService` y los comandos (patrón Command) |
 | Asignación de barbero | `src/nucleo/asignacion/` | Algoritmo de colonia de hormigas |
-| Datos | `src/datos/` | Barberos, servicios, turnos, duraciones y feromonas en memoria |
+| Administración | `src/nucleo/Administracion.js` | Operaciones del dueño |
+| Datos | `src/datos/` | `repositorio.js` (listas en memoria) y `baseDatos.js` (SQLite) |
 | Utilidades | `src/utilidades/` | Validaciones, tipos de error y manejo de errores de la API |
 
 ## 3. Responsabilidades de cada componente
@@ -27,14 +30,17 @@ Muchas barberías de barrio atienden por orden de llegada. El cliente llega, ve 
 - **Cálculo de la espera:** tiempo que le falta al cliente de la silla + duración esperada de quienes están antes. La duración esperada es el promedio de las últimas 10 duraciones válidas (entre 5 y 90 minutos) de ese barbero en ese servicio, o la duración base si tiene menos de 3. Se redondea a múltiplos de 5 minutos.
 - **Asignación:** si el cliente elige "El que esté libre primero", el barbero se elige con colonia de hormigas.
 - **Rutas:** conectan las pantallas con `FilaService`; no toman decisiones de negocio.
-- **Datos:** único lugar que guarda información, para poder cambiarlo después por una base de datos.
+- **Datos:** `repositorio.js` es el único lugar que guarda información. Trabaja con listas en memoria y, después de cada acción, las copia a la base de datos SQLite (`baseDatos.js`), así la fila y lo aprendido no se pierden al apagar el portátil.
+- **Administración:** el dueño configura barberos y servicios, ve el resumen del día y cierra la jornada desde un panel protegido con PIN.
 
 ## 4. Tecnologías y herramientas
 
 - **Lenguaje:** JavaScript.
 - **Servidor:** Node.js con Express.
-- **Pantallas:** HTML y CSS, sin frameworks.
-- **Pruebas:** módulo `node:test` incluido en Node.js.
+- **Pantallas:** HTML, CSS y JavaScript, sin frameworks.
+- **Base de datos:** SQLite con el módulo `node:sqlite` incluido en Node.js 22 (no requiere instalar nada).
+- **Código QR:** librería `qrcode`.
+- **Pruebas:** módulo `node:test` incluido en Node.js, ejecutadas también en GitHub Actions.
 - **Control de versiones:** Git y GitHub.
 - **Editor:** Visual Studio Code.
 - **Organización del trabajo:** tablero Kanban.
@@ -49,8 +55,9 @@ En el repositorio:
 - Cada integrante hace commits pequeños con mensajes claros que dicen qué se hizo.
 - Las pruebas se ejecutan con `npm test` antes de subir cambios.
 
-## 6. Patrones implementados (segunda entrega)
+## 6. Patrones implementados (versión final)
 
 - **Factory Method** en `src/creacion/`: ver `documentacion/patrones/factory-method.md`.
 - **Command** en `src/nucleo/comandos/`: ver `documentacion/patrones/command.md`.
 - **Colonia de hormigas (ACO)** en `src/nucleo/asignacion/`: ver `documentacion/patrones/colonia-hormigas.md`.
+- **Repositorio** en `src/datos/repositorio.js`: esconde la base de datos al resto del sistema; por eso agregar SQLite no obligó a cambiar las fábricas ni los comandos. Ver `documentacion/base-datos.md`.
