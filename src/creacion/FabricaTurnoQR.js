@@ -27,9 +27,14 @@ class FabricaTurnoQR extends FabricaTurnos {
     }
 
     const quiereCualquiera = !datos.barberoId || datos.barberoId === "auto";
-    const barberoId = quiereCualquiera
-      ? this.elegirBarbero(datos.servicioId)
-      : buscarPorId(repositorio.barberos, datos.barberoId, "Ese barbero no existe").id;
+    let barberoId;
+    if (quiereCualquiera) {
+      barberoId = this.elegirBarbero(datos.servicioId);
+    } else {
+      const barbero = buscarPorId(repositorio.barberos, datos.barberoId, "Ese barbero no existe");
+      if (!barbero.activo) throw new ErrorConflicto(`${barbero.nombre} no está atendiendo en este momento`);
+      barberoId = barbero.id;
+    }
 
     return new TurnoQR(datos.nombre, datos.servicioId, barberoId, datos.dispositivoId);
   }
