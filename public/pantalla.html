@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CuántoFalta · Pantalla</title>
+  <link rel="stylesheet" href="estilos.css">
+  <style>
+    /* Pantalla para el televisor del local: letras grandes y fondo oscuro */
+    body { background: var(--carbon); color: var(--crema); }
+    .tv { padding: 32px 40px; display: grid; grid-template-columns: 1fr 300px; gap: 32px; min-height: calc(100vh - 70px); }
+    .columnas { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; align-content: start; }
+    .barbero { background: var(--carbon-2); border-radius: 20px; padding: 24px; border: 1px solid var(--carbon-3); }
+    .barbero h3 { margin: 0; font-size: 28px; }
+    .barbero .espera { color: #9aa1ad; font-size: 16px; margin-top: 4px; }
+    .barbero .espera b { color: #f2b8bb; }
+    .atendiendo { margin: 20px 0; padding: 18px; background: var(--verde); border-radius: 14px; }
+    .atendiendo small { text-transform: uppercase; letter-spacing: 2px; font-size: 12px; opacity: .85; }
+    .atendiendo div { font-size: 40px; font-weight: 800; }
+    .atendiendo.libre { background: var(--carbon-3); }
+    .atendiendo.libre div { font-size: 22px; color: #9aa1ad; }
+    .siguientes { list-style: none; padding: 0; margin: 0; }
+    .siguientes li { font-size: 22px; padding: 10px 0; border-top: 1px solid var(--carbon-3); display: flex; gap: 14px; }
+    .siguientes li b { color: #f2b8bb; min-width: 48px; }
+    .qr { background: var(--papel); color: var(--tinta); border-radius: 20px; padding: 24px; text-align: center; align-self: start; }
+    .qr h2 { margin: 0 0 6px; font-size: 24px; }
+    .qr svg { width: 100%; height: auto; margin: 10px 0; }
+    .qr p { margin: 0; color: var(--gris); }
+    .reloj-tv { font-size: 18px; color: #9aa1ad; margin-left: auto; font-variant-numeric: tabular-nums; }
+    @media (max-width: 800px) { .tv { grid-template-columns: 1fr; padding: 20px; } }
+  </style>
+</head>
+<body>
+  <header class="barra">
+    <div class="marca" style="font-size:26px">✂ <span>Cuánto<em>Falta</em></span></div>
+    <div class="reloj-tv" id="reloj"></div>
+  </header>
+
+  <main class="tv">
+    <section class="columnas" id="columnas"></section>
+    <aside class="qr">
+      <h2>¿Vas a esperar?</h2>
+      <p>Escanea y sal tranquilo. Te avisamos cuánto te falta.</p>
+      <div id="codigo"></div>
+      <p id="espera"></p>
+    </aside>
+  </main>
+
+  <script src="comun.js"></script>
+  <script>
+    async function actualizar() {
+      const { ok, datos } = await api("/estado");
+      if (!ok) return;
+      document.getElementById("columnas").innerHTML = datos.barberos.map(b => `
+        <article class="barbero">
+          <h3>${escapar(b.nombre)}</h3>
+          <div class="espera">${b.enEspera} en espera · nuevo turno ≈ <b>${b.esperaNuevo} min</b></div>
+          <div class="atendiendo ${b.enSilla ? "" : "libre"}">
+            <small>${b.enSilla ? "Atendiendo" : "Silla"}</small>
+            <div>${b.enSilla ? `#${b.enSilla.numero} ${escapar(b.enSilla.nombre)}` : "Libre"}</div>
+          </div>
+          <ul class="siguientes">
+            ${b.proximos.map(t => `<li><b>#${t.numero}</b>${escapar(t.nombre)}</li>`).join("") || '<li style="color:#9aa1ad">Nadie en espera</li>'}
+          </ul>
+        </article>`).join("");
+      document.getElementById("espera").textContent =
+        datos.totalEspera === 0 ? "Ahora mismo no hay fila" : `${datos.totalEspera} persona(s) esperando`;
+    }
+
+    async function cargarQr() {
+      const { ok, datos } = await api("/qr");
+      if (ok) document.getElementById("codigo").innerHTML = datos.svg; // SVG generado por el servidor
+    }
+
+    function reloj() {
+      document.getElementById("reloj").textContent =
+        new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
+    }
+
+    cargarQr(); actualizar(); reloj();
+    setInterval(actualizar, 10000);
+    setInterval(reloj, 15000);
+  </script>
+</body>
+</html>
