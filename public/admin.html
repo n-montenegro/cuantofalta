@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#16181d">
+  <title>CuántoFalta · Panel del dueño</title>
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+  <header class="barra">
+    <div class="marca">✂ <span>Cuánto<em>Falta</em></span></div>
+    <div class="rol">Dueño</div>
+  </header>
+
+  <!-- Pedir PIN -->
+  <main class="contenedor" id="entrada">
+    <div class="tarjeta">
+      <h1>Panel del dueño</h1>
+      <p class="sub">Configura barberos y servicios y mira cómo va el día.</p>
+      <label for="pin">PIN</label>
+      <input id="pin" type="password" inputmode="numeric" placeholder="••••">
+      <button class="boton" id="entrar">Entrar</button>
+      <p class="error" id="errorPin"></p>
+    </div>
+  </main>
+
+  <main class="contenedor ancho oculto" id="panel">
+    <div style="display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+      <div>
+        <h1>Resumen de hoy</h1>
+        <div class="estado-bd" id="estadoBd"></div>
+      </div>
+      <button class="boton peque secundario" style="margin-left:auto" id="refrescar">↻ Actualizar</button>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><small>Turnos</small><b id="kTotal">0</b></div>
+      <div class="kpi"><small>Atendidos</small><b id="kAtendidos">0</b></div>
+      <div class="kpi"><small>Esperando</small><b id="kEspera">0</b></div>
+      <div class="kpi"><small>Espera real prom.</small><b id="kEsperaReal">—</b></div>
+      <div class="kpi"><small>Ausentes / cancel.</small><b id="kPerdidos">0</b></div>
+      <div class="kpi"><small>Por QR / manual</small><b id="kOrigen">0</b></div>
+    </div>
+
+    <div class="rejilla">
+      <div class="tarjeta">
+        <h2>Barberos</h2>
+        <div class="tabla-scroll"><table>
+          <thead><tr><th>Nombre</th><th>Atend.</th><th>Prom.</th><th>Fila</th><th>Activo</th></tr></thead>
+          <tbody id="tablaBarberos"></tbody>
+        </table></div>
+        <div class="en-linea">
+          <input id="nuevoBarbero" placeholder="Nombre del barbero nuevo" maxlength="40">
+          <button class="boton peque oscuro" id="agregarBarbero">Agregar</button>
+        </div>
+      </div>
+
+      <div class="tarjeta">
+        <h2>Servicios y duración base</h2>
+        <table>
+          <thead><tr><th>Servicio</th><th>Minutos base</th><th></th></tr></thead>
+          <tbody id="tablaServicios"></tbody>
+        </table>
+        <div class="en-linea">
+          <input id="nuevoServicio" placeholder="Servicio nuevo" maxlength="40">
+          <input id="minutosServicio" class="corto" type="number" min="5" max="90" placeholder="min">
+          <button class="boton peque oscuro" id="agregarServicio">Agregar</button>
+        </div>
+        <p class="sub" style="margin:12px 0 0;font-size:13px">La duración base se usa hasta que el barbero tenga 3 servicios registrados; después se usa su promedio real.</p>
+      </div>
+
+      <div class="tarjeta">
+        <h2>Colonia de hormigas · feromona</h2>
+        <p class="sub" style="font-size:13px;margin-bottom:10px">Sube cuando el barbero termina más rápido que la duración base. Se usa en "El que esté libre primero".</p>
+        <table>
+          <thead><tr><th>Barbero</th><th>Servicio</th><th class="tau">τ</th><th></th></tr></thead>
+          <tbody id="tablaFeromonas"></tbody>
+        </table>
+      </div>
+
+      <div class="tarjeta">
+        <h2>Pantallas</h2>
+        <div class="enlaces">
+          <a href="/qr.html" target="_blank">🖨 Cartel con QR<small>Para imprimir y pegar</small></a>
+          <a href="/pantalla.html" target="_blank">📺 Pantalla TV<small>Para el televisor del local</small></a>
+          <a href="/barbero.html" target="_blank">✂ Panel barbero<small>Para el celular del barbero</small></a>
+          <a href="/" target="_blank">📱 Vista cliente<small>Lo que ve quien escanea</small></a>
+        </div>
+        <h2 style="margin-top:22px">Fin de la jornada</h2>
+        <p class="sub" style="font-size:13px;margin-bottom:0">Borra la fila de hoy y reinicia la numeración. Lo aprendido (duraciones y feromonas) se conserva.</p>
+        <button class="boton" id="cerrarDia">Cerrar el día</button>
+      </div>
+    </div>
+  </main>
+
+  <script src="comun.js"></script>
+  <script>
+    let pin = sessionStorage.getItem("cuantofalta-pin") || "";
+    const conPin = () => ({ "x-pin": pin });
+
+    async function entrar() {
+      pin = document.getElementById("pin").value || pin;
+      const { ok, datos } = await api("/admin/resumen", "GET", undefined, conPin());
+      if (!ok) {
+        sessionStorage.removeItem("cuantofalta-pin");
+        document.getElementById("errorPin").textContent = datos.error;
+        return;
+      }
+      sessionStorage.setItem("cuantofalta-pin", pin);
+      document.getElementById("entrada").classList.add("oculto");
+      document.getElementById("panel").classList.remove("oculto");
+      pintar(datos);
+    }
+
+    async function refrescar() {
+      const { ok, datos } = await api("/admin/resumen", "GET", undefined, conPin());
+      if (ok) pintar(datos);
+    }
+
+    async function pintar(r) {
+      const minutos = (m) => (m === null ? "—" : m + "'");
+      document.getElementById("kTotal").textContent = r.totalTurnos;
+      document.getElementById("kAtendidos").textContent = r.atendidos;
+      document.getElementById("kEspera").textContent = r.enEspera + r.enSilla;
+      document.getElementById("kEsperaReal").textContent = minutos(r.esperaPromedioReal);
+      document.getElementById("kPerdidos").textContent = `${r.ausentes} / ${r.cancelados}`;
+      document.getElementById("kOrigen").textContent = `${r.porQr} / ${r.manuales}`;
+      document.getElementById("estadoBd").innerHTML = r.baseDatos
+        ? "<b>●</b> Datos guardados en la base de datos SQLite"
+        : "● Solo en memoria (los datos se pierden al apagar)";
+
+      document.getElementById("tablaBarberos").innerHTML = r.porBarbero.map(b => `
+        <tr>
+          <td><b>${escapar(b.nombre)}</b></td>
+          <td>${b.atendidos}</td>
+          <td>${minutos(b.promedioMinutos)}</td>
+          <td>${b.enEspera}</td>
+          <td><label class="interruptor" style="margin:0"><input type="checkbox" data-barbero="${b.id}" ${b.activo ? "checked" : ""}><span></span></label></td>
+        </tr>`).join("");
+
+      const { datos } = await api("/datos");
+      document.getElementById("tablaServicios").innerHTML = datos.servicios.map(s => `
+        <tr>
+          <td>${escapar(s.nombre)}</td>
+          <td><input type="number" min="5" max="90" value="${s.minutos}" data-servicio="${s.id}"></td>
+          <td><button class="boton peque secundario" data-guardar="${s.id}">Guardar</button></td>
+        </tr>`).join("");
+
+      const maximo = Math.max(2, ...r.feromonas.map(f => f.feromona));
+      document.getElementById("tablaFeromonas").innerHTML = r.feromonas.map(f => `
+        <tr>
+          <td>${escapar(f.barbero)}</td><td>${escapar(f.servicio)}</td><td>${f.feromona.toFixed(2)}</td>
+          <td style="width:35%"><div class="barra-feromona"><i style="width:${(f.feromona / maximo) * 100}%"></i></div></td>
+        </tr>`).join("");
+    }
+
+    async function enviar(ruta, metodo, cuerpo, mensaje) {
+      const { ok, datos } = await api(ruta, metodo, cuerpo, conPin());
+      if (!ok) { avisar(datos.error, true); refrescar(); return false; }
+      avisar(mensaje || datos.mensaje || "Guardado ✓");
+      refrescar();
+      return true;
+    }
+
+    document.getElementById("tablaBarberos").addEventListener("change", e => {
+      const caja = e.target.closest("[data-barbero]");
+      if (caja) enviar(`/admin/barberos/${caja.dataset.barbero}`, "PATCH", { activo: caja.checked },
+        caja.checked ? "Barbero atendiendo" : "Barbero en descanso");
+    });
+    document.getElementById("tablaServicios").addEventListener("click", e => {
+      const boton = e.target.closest("[data-guardar]");
+      if (!boton) return;
+      const minutos = document.querySelector(`[data-servicio="${boton.dataset.guardar}"]`).value;
+      enviar(`/admin/servicios/${boton.dataset.guardar}`, "PATCH", { minutos: Number(minutos) });
+    });
+    document.getElementById("agregarBarbero").addEventListener("click", async () => {
+      const campo = document.getElementById("nuevoBarbero");
+      if (await enviar("/admin/barberos", "POST", { nombre: campo.value }, "Barbero agregado")) campo.value = "";
+    });
+    document.getElementById("agregarServicio").addEventListener("click", async () => {
+      const nombre = document.getElementById("nuevoServicio");
+      const minutos = document.getElementById("minutosServicio");
+      if (await enviar("/admin/servicios", "POST", { nombre: nombre.value, minutos: Number(minutos.value) }, "Servicio agregado")) {
+        nombre.value = ""; minutos.value = "";
+      }
+    });
+    document.getElementById("cerrarDia").addEventListener("click", () => {
+      if (confirm("¿Cerrar el día? Se borrará la fila de hoy.")) enviar("/admin/cerrar-dia", "POST", {});
+    });
+    document.getElementById("entrar").addEventListener("click", entrar);
+    document.getElementById("pin").addEventListener("keydown", e => { if (e.key === "Enter") entrar(); });
+    document.getElementById("refrescar").addEventListener("click", refrescar);
+    setInterval(() => { if (!document.getElementById("panel").classList.contains("oculto")) refrescar(); }, 20000);
+    if (pin) entrar();
+  </script>
+</body>
+</html>
