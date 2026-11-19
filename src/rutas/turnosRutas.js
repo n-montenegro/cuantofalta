@@ -16,6 +16,11 @@ function turnosRutas(filaService) {
     res.json(filaService.consultarTurno(req.params.numero));
   });
 
+  // El cliente cancela su turno porque ya no puede esperar
+  rutas.post("/:numero/cancelar", (req, res) => {
+    res.json(filaService.cancelarTurno(req.params.numero, req.body.dispositivoId));
+  });
+
   return rutas;
 }
 
