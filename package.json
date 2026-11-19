@@ -1,22 +1,28 @@
 {
   "name": "cuantofalta",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "Fila virtual con tiempo estimado de espera para barberías que atienden por orden de llegada",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "test": "node --test tests/fabricas.test.js tests/comandos.test.js tests/fila.test.js tests/hormigas.test.js tests/api.test.js",
+    "test": "node --test tests/fabricas.test.js tests/comandos.test.js tests/fila.test.js tests/hormigas.test.js tests/admin.test.js tests/basedatos.test.js tests/api.test.js",
     "build": "npx --yes @yao-pkg/pkg@6.6.0 ."
   },
   "author": "Equipo CuántoFalta - UMB",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "qrcode": "^1.5.4"
   },
   "bin": "src/server.js",
   "pkg": {
-    "assets": ["public/**/*"],
-    "targets": ["node22-win-x64", "node22-linux-x64"],
+    "assets": [
+      "public/**/*"
+    ],
+    "targets": [
+      "node22-win-x64",
+      "node22-linux-x64"
+    ],
     "outputPath": "dist"
   }
 }
