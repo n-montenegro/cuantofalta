@@ -37,6 +37,21 @@ test("flujo completo por la API", async () => {
 
     r = await enviar("/barberos/7/siguiente");
     assert.strictEqual(r.status, 404);
+
+    // Panel del dueño: sin PIN responde 401, con PIN funciona
+    r = await fetch(url + "/admin/resumen");
+    assert.strictEqual(r.status, 401);
+    r = await fetch(url + "/admin/resumen", { headers: { "x-pin": "1234" } });
+    assert.strictEqual(r.status, 200);
+    assert.strictEqual((await r.json()).totalTurnos, 1);
+
+    // Código QR para imprimir
+    r = await fetch(url + "/qr");
+    assert.ok((await r.json()).svg.startsWith("<svg"));
+
+    // Cancelar el turno desde el mismo celular
+    r = await enviar("/turnos/1/cancelar", { dispositivoId: "x" });
+    assert.strictEqual((await r.json()).estado, "CANCELADO");
   } finally {
     servidor.close();
   }
