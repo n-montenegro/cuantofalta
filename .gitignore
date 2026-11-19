@@ -8,3 +8,7 @@ npm-debug.log*
 
 # Variables de entorno (si algún día se usan)
 .env
+
+# Base de datos local y ejecutables generados
+datos/
+dist/
